@@ -93,5 +93,10 @@ if static_dir.exists():
 
 if __name__ == "__main__":
     import uvicorn
-    # Directly pass the app to avoid module path issues during local runs
-    uvicorn.run(app, host="0.0.0.0", port=3000, reload=True)
+    import os
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "3000"))
+    reload_flag = os.getenv("RELOAD", "1").lower() in {"1", "true", "yes", "on"}
+    # Use import string so uvicorn reload/workers work when running inside `api/`.
+    # In `api` directory, module path is "main:app".
+    uvicorn.run("main:app", host=host, port=port, reload=reload_flag)

@@ -1,4 +1,4 @@
-# Multi-stage build: build React, build Nest, assemble runtime with Python + pdf2docx
+# Multi-stage build: build React, then assemble Python runtime with pdf2docx
 
 FROM node:20-bullseye AS client-build
 WORKDIR /client

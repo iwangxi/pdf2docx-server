@@ -6,6 +6,10 @@ PDF2DOCX Web（FastAPI + React + Docker）
 - 前端：React 单页，选择 PDF 上传，返回后自动下载 DOCX。
 - 部署：单镜像（Python 基础镜像 + pdf2docx），一键构建运行。
 
+依赖说明
+
+- 不依赖宿主机的任何“pdf2docx 服务/进程”。后端直接使用 Python 库 `pdf2docx` 在容器/本机内部完成转换。
+
 接口一览（Swagger）
 
 - 文档：`/docs`（Swagger UI）、`/redoc`（ReDoc）
@@ -36,9 +40,10 @@ PDF2DOCX Web（FastAPI + React + Docker）
 - 建议使用虚拟环境：
   - `python3 -m venv .venv && source .venv/bin/activate`
 - 安装依赖：`pip install -r requirements.txt`
-- 启动（在项目根/当前目录分别选择其一）：
-  - 当前目录：`uvicorn main:app --host 0.0.0.0 --port 3000 --reload`
-  - 项目根：`uvicorn api.main:app --host 0.0.0.0 --port 3000 --reload`
+- 启动（任选其一）：
+  - 单命令入口（项目根）：`python3 main.py`（默认端口 3000，带 reload）
+  - uvicorn（api 目录内）：`uvicorn main:app --host 0.0.0.0 --port 3000 --reload`
+  - uvicorn（项目根）：`uvicorn api.main:app --host 0.0.0.0 --port 3000 --reload`
 - 访问：`http://localhost:3000/docs`
 
 前端（React + Vite）
@@ -76,6 +81,23 @@ Docker 说明
 
 - 使用 `python:3.11-slim` 作为运行时，安装 `fastapi`、`uvicorn`、`pdf2docx`。
 - 构建阶段会打包 React 前端并复制到 API 的 `public` 目录，FastAPI 直接托管静态资源。
+
+Kubernetes 部署
+
+1) 构建并推送镜像（示例）
+- `docker build -t <REGISTRY>/<NAMESPACE>/pdf2docx-web:latest .`
+- `docker push <REGISTRY>/<NAMESPACE>/pdf2docx-web:latest`
+
+2) 修改镜像地址
+- 编辑 `k8s/deployment.yaml`，设置 `spec.template.spec.containers[0].image` 为你的镜像地址
+
+3) 部署到集群
+- `kubectl apply -f k8s/`
+
+4) 访问服务（示例）
+- 集群内：访问 Service `pdf2docx-web` 的 `:80`
+- 本地转发：`kubectl port-forward svc/pdf2docx-web 3000:80`
+- 浏览 Swagger：`http://localhost:3000/docs`
 
 注意与建议
 
