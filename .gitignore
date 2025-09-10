@@ -1,0 +1,17 @@
+# Node
+client/node_modules/
+client/.vite/
+client/dist/
+
+# Python venv
+api/.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# OS
+.DS_Store
