@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from pdf2docx import Converter
@@ -23,6 +23,18 @@ app = FastAPI(
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# 一些浏览器扩展/代理会向 /proxy/* 发送探测或错误上报请求，
+# 避免被 StaticFiles 捕获后返回 405，统一以 204 忽略。
+@app.post("/proxy/report-error")
+def _proxy_report_error_sink():
+    return Response(status_code=204)
+
+
+@app.api_route("/proxy/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+def _proxy_any_sink(rest: str):
+    return Response(status_code=204)
 
 
 @app.post("/api/convert", summary="上传 PDF 并返回 DOCX")
