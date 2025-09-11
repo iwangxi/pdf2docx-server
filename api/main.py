@@ -1,5 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Query, Request
 from fastapi.responses import FileResponse, Response
+from starlette.background import BackgroundTask
+from urllib.parse import quote
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from pdf2docx import Converter
@@ -83,13 +85,22 @@ def convert(
             except Exception:
                 pass
 
-        background_tasks.add_task(cleanup)
+        # 使用 Response 的 background 回调，确保文件完整发送后再清理
+        background = BackgroundTask(shutil.rmtree, workdir, True)
 
-        return FileResponse(
+        resp = FileResponse(
             path=str(docx_path),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             filename=download_name,
+            background=background,
         )
+        # 兼容非 ASCII 文件名：增加 RFC 5987 格式的 filename*
+        try:
+            disp = resp.headers.get("content-disposition", "attachment")
+            resp.headers["content-disposition"] = f"{disp}; filename*=UTF-8''{quote(download_name)}"
+        except Exception:
+            pass
+        return resp
     finally:
         try:
             file.file.close()
